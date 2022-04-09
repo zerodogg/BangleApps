@@ -1,6 +1,6 @@
 {
   "id": "ios",
-  "name": "iOS Integration",
+  "name": "iOS Integration with exclusion hacks",
   "version": "0.09",
   "description": "Display notifications/music/etc from iOS devices",
   "icon": "app.png",

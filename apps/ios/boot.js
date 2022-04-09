@@ -112,9 +112,17 @@ E.on('notify',msg=>{
 
     // could also use NRF.ancsGetAppInfo(msg.appId) here
   };
+  const ignoredApps = {
+      "no.finn.ipad.rubrikk":1,
+      "com.google.ingress":1,
+  };
   var unicodeRemap = {
     '2019':"'"
   };
+  if(ignoredApps[msg.appId] === 1) {
+      // Ignored
+      return;
+  }
   var replacer = ""; //(n)=>print('Unknown unicode '+n.toString(16));
   //if (appNames[msg.appId]) msg.a
   require("messages").pushMessage({
