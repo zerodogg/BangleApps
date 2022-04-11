@@ -117,6 +117,7 @@ E.on('notify',msg=>{
   const ignoredApps = {
       "no.finn.ipad.rubrikk":1,
       "com.google.ingress":1,
+      "com.patreon.iphone":1,
   };
   var unicodeRemap = {
     '2019':"'"
