@@ -121,7 +121,21 @@ E.on('notify',msg=>{
       "com.valvesoftware.Steam":1,
   };
   var unicodeRemap = {
-    '2019':"'"
+    '2019':"'",
+    // 👍
+    '0xf09f918d':"(y)",
+    // 😊
+    '0xf09f988a':":)",
+    // 😃
+    '0xf09f9883':':)',
+    // 😮
+    '0xf09f98ae':':o',
+    // 😯
+    '0xf09f98af':':o',
+    // 😔
+    '0xf09f9894':':(',
+    // 🥲
+    '0xf09fa5b2':":')",
   };
   if(ignoredApps[msg.appId] === 1) {
       // Ignored
