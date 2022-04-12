@@ -118,6 +118,7 @@ E.on('notify',msg=>{
       "no.finn.ipad.rubrikk":1,
       "com.google.ingress":1,
       "com.patreon.iphone":1,
+      "com.valvesoftware.Steam":1,
   };
   var unicodeRemap = {
     '2019':"'"

@@ -2,7 +2,7 @@
   "id": "ios",
   "name": "iOS Integration with exclusion hacks",
   "shortName": "iOS Integration",
-  "version": "1.10",
+  "version": "1.11",
   "description": "Display notifications/music/etc from iOS devices",
   "icon": "app.png",
   "tags": "tool,system,ios,apple,messages,notifications",
