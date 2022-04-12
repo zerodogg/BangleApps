@@ -113,7 +113,21 @@ E.on('notify',msg=>{
     // could also use NRF.ancsGetAppInfo(msg.appId) here
   };
   var unicodeRemap = {
-    '2019':"'"
+    '2019':"'",
+    // 👍
+    '0xf09f918d':"(y)",
+    // 😊
+    '0xf09f988a':":)",
+    // 😃
+    '0xf09f9883':':)',
+    // 😮
+    '0xf09f98ae':':o',
+    // 😯
+    '0xf09f98af':':o',
+    // 😔
+    '0xf09f9894':':(',
+    // 🥲
+    '0xf09fa5b2':":')",
   };
   var replacer = ""; //(n)=>print('Unknown unicode '+n.toString(16));
   //if (appNames[msg.appId]) msg.a
