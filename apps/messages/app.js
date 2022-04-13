@@ -51,18 +51,14 @@ var unreadTimeout;
 var MESSAGES = require("Storage").readJSON("messages.json",1)||[];
 if (!Array.isArray(MESSAGES)) MESSAGES=[];
 var onMessagesModified = function(msg) {
-  var quiet = (require('Storage').readJSON('setting.json', 1) || {}).quiet;
   // TODO: if new, show this new one
-  if (msg && msg.id!=="music" && msg.new && !quiet) {
+  if (msg && msg.id!=="music" && msg.new && !((require('Storage').readJSON('setting.json', 1) || {}).quiet)) {
     if (WIDGETS["messages"]) WIDGETS["messages"].buzz();
     else Bangle.buzz();
   }
   if (msg && msg.id=="music") {
     if (msg.state && msg.state!="play") openMusic = false; // no longer playing music to go back to
     if (active!="music") return; // don't open music over other screens
-  }
-  if(quiet && settings.quietNoAutOpn) { // don't auto-open messages in quiet mode if quietNoAutOpn is true
-      return;
   }
   showMessage(msg&&msg.id);
 };
