@@ -4,23 +4,6 @@ Bangle.drawWidgets();
 // An array of alarm objects (see sched/README.md)
 let alarms = require("sched").getAlarms();
 
-// time in ms -> { hrs, mins }
-function decodeTime(t) {
-  t = 0 | t; // sanitise
-  let hrs = 0 | (t / 3600000);
-  return { hrs: hrs, mins: Math.round((t - hrs * 3600000) / 60000) };
-}
-
-// time in { hrs, mins } -> ms
-function encodeTime(o) {
-  return o.hrs * 3600000 + o.mins * 60000;
-}
-
-function formatTime(t) {
-  let o = decodeTime(t);
-  return o.hrs + ":" + ("0" + o.mins).substr(-2);
-}
-
 function getCurrentTime() {
   let time = new Date();
   return (
@@ -48,10 +31,10 @@ function showMainMenu() {
     var type,txt; // a leading space is currently required (JS error in Espruino 2v12)
     if (alarm.timer) {
       type = /*LANG*/"Timer";
-      txt = " "+formatTime(alarm.timer);
+      txt = " "+require("sched").formatTime(alarm.timer);
     } else {
       type = /*LANG*/"Alarm";
-      txt = " "+formatTime(alarm.t);
+      txt = " "+require("sched").formatTime(alarm.t);
     }
     if (alarm.rp) txt += "\0"+atob("FBaBAAABgAAcAAHn//////wAHsABzAAYwAAMAADAAAAAAwAAMAADGAAzgAN4AD//////54AAOAABgAA=");
     // rename duplicate alarms
@@ -69,6 +52,17 @@ function showMainMenu() {
       }
     };
   });
+
+  if (alarms.some(e => !e.on)) {
+    menu[/*LANG*/"Enable All"] = () => enableAll(true);
+  }
+  if (alarms.some(e => e.on)) {
+    menu[/*LANG*/"Disable All"] = () => enableAll(false);
+  }
+  if (alarms.length > 0) {
+    menu[/*LANG*/"Delete All"] = () => deleteAll();
+  }
+
   if (WIDGETS["alarm"]) WIDGETS["alarm"].reload();
   return E.showMenu(menu);
 }
@@ -94,11 +88,14 @@ function editAlarm(alarmIndex, alarm) {
   let a = require("sched").newDefaultAlarm();
   if (!newAlarm) Object.assign(a, alarms[alarmIndex]);
   if (alarm) Object.assign(a,alarm);
-  let t = decodeTime(a.t);
+  let t = require("sched").decodeTime(a.t);
 
   const menu = {
     '': { 'title': /*LANG*/'Alarm' },
-    /*LANG*/'< Back' : () => showMainMenu(),
+    /*LANG*/'< Back': () => {
+      saveAlarm(newAlarm, alarmIndex, a, t);
+      showMainMenu();
+    },
     /*LANG*/'Hours': {
       value: t.hrs, min : 0, max : 23, wrap : true,
       onchange: v => t.hrs=v
@@ -121,7 +118,7 @@ function editAlarm(alarmIndex, alarm) {
       value: "SMTWTFS".split("").map((d,n)=>a.dow&(1<<n)?d:".").join(""),
       onchange: () => editDOW(a.dow, d => {
         a.dow = d;
-        a.t = encodeTime(t);
+        a.t = require("sched").encodeTime(t);
         editAlarm(alarmIndex, a);
       })
     },
@@ -132,22 +129,31 @@ function editAlarm(alarmIndex, alarm) {
       onchange: v => a.as = v
     }
   };
-  menu[/*LANG*/"Save"] = function() {
-    a.t = encodeTime(t);
-    a.last = (a.t < getCurrentTime()) ? (new Date()).getDate() : 0;
-    if (newAlarm) alarms.push(a);
-    else alarms[alarmIndex] = a;
-    saveAndReload();
-    showMainMenu();
-  };
+
+  menu[/*LANG*/"Cancel"] = () => showMainMenu();
+
   if (!newAlarm) {
-    menu[/*LANG*/"Delete"] = function() {
-      alarms.splice(alarmIndex,1);
+    menu[/*LANG*/"Delete"] = function () {
+      alarms.splice(alarmIndex, 1);
       saveAndReload();
       showMainMenu();
     };
   }
+
   return E.showMenu(menu);
+}
+
+function saveAlarm(newAlarm, alarmIndex, a, t) {
+  a.t = require("sched").encodeTime(t);
+  a.last = (a.t < getCurrentTime()) ? (new Date()).getDate() : 0;
+
+  if (newAlarm) {
+    alarms.push(a);
+  } else {
+    alarms[alarmIndex] = a;
+  }
+
+  saveAndReload();
 }
 
 function editTimer(alarmIndex, alarm) {
@@ -155,11 +161,14 @@ function editTimer(alarmIndex, alarm) {
   let a = require("sched").newDefaultTimer();
   if (!newAlarm) Object.assign(a, alarms[alarmIndex]);
   if (alarm) Object.assign(a,alarm);
-  let t = decodeTime(a.timer);
+  let t = require("sched").decodeTime(a.timer);
 
   const menu = {
     '': { 'title': /*LANG*/'Timer' },
-    /*LANG*/'< Back' : () => showMainMenu(),
+    /*LANG*/'< Back': () => {
+      saveTimer(newAlarm, alarmIndex, a, t);
+      showMainMenu();
+    },
     /*LANG*/'Hours': {
       value: t.hrs, min : 0, max : 23, wrap : true,
       onchange: v => t.hrs=v
@@ -175,15 +184,9 @@ function editTimer(alarmIndex, alarm) {
     },
     /*LANG*/'Vibrate': require("buzz_menu").pattern(a.vibrate, v => a.vibrate=v ),
   };
-  menu[/*LANG*/"Save"] = function() {
-    a.timer = encodeTime(t);
-    a.t = getCurrentTime() + a.timer;
-    a.last = 0;
-    if (newAlarm) alarms.push(a);
-    else alarms[alarmIndex] = a;
-    saveAndReload();
-    showMainMenu();
-  };
+
+  menu[/*LANG*/"Cancel"] = () => showMainMenu();
+
   if (!newAlarm) {
     menu[/*LANG*/"Delete"] = function() {
       alarms.splice(alarmIndex,1);
@@ -192,6 +195,46 @@ function editTimer(alarmIndex, alarm) {
     };
   }
   return E.showMenu(menu);
+}
+
+function saveTimer(newAlarm, alarmIndex, a, t) {
+  a.timer = require("sched").encodeTime(t);
+  a.t = getCurrentTime() + a.timer;
+  a.last = 0;
+
+  if (newAlarm) {
+    alarms.push(a);
+  } else {
+    alarms[alarmIndex] = a;
+  }
+
+  saveAndReload();
+}
+
+function enableAll(on) {
+  E.showPrompt(/*LANG*/"Are you sure?", {
+    title: on ? /*LANG*/"Enable All" : /*LANG*/"Disable All"
+  }).then((confirm) => {
+    if (confirm) {
+      alarms.forEach(alarm => alarm.on = on);
+      saveAndReload();
+    }
+
+    showMainMenu();
+  });
+}
+
+function deleteAll() {
+  E.showPrompt(/*LANG*/"Are you sure?", {
+    title: /*LANG*/"Delete All"
+  }).then((confirm) => {
+    if (confirm) {
+      alarms = [];
+      saveAndReload();
+    }
+
+    showMainMenu();
+  });
 }
 
 showMainMenu();
