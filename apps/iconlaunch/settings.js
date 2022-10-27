@@ -2,7 +2,11 @@
 (function(back) {
   let settings = Object.assign({
     showClocks: true,
-    fullscreen: false
+    fullscreen: false,
+    direct: false,
+    oneClickExit: false,
+    swipeExit: false,
+    fastload: false
   }, require("Storage").readJSON("launch.json", true) || {});
 
   let fonts = g.getFonts();
@@ -28,6 +32,14 @@
     /*LANG*/"One click exit": {
       value: settings.oneClickExit == true,
       onchange: (m) => { save("oneClickExit", m) }
+    },
+    /*LANG*/"Swipe exit": {
+      value: settings.swipeExit == true,
+      onchange: m => { save("swipeExit", m) }
+    },
+    /*LANG*/"Fastload": {
+      value: settings.fastload == true,
+      onchange: (m) => { save("fastload", m) }
     }
   };
   E.showMenu(appMenu);
