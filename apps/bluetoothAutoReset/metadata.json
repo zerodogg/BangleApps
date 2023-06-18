@@ -8,7 +8,7 @@
   "supports": ["BANGLEJS2"],
   "readme": "README.md",
   "storage": [
-    {"name":"bluetoothAutoReset.boot.js","url":"boot.js"},
+    {"name":"bluetoothAutoReset.boot.js","url":"boot.js"}
   ], "data" : [
     {"name":"bluetoothAutoReset.json"}
   ]
