@@ -61,7 +61,9 @@ E.showMenu(menu);
 */
 var state = {
   active : false, // are we working or not?
-  // startTime, // time exercise started
+  // startTime, // time exercise started (in ms from 1970)
+  // lastTime, // time we had our last reading (in ms from 1970)
+  duration : 0, // the length of this exercise (in ms)
   lastGPS:{}, thisGPS:{}, // This & previous GPS readings
   // distance : 0, ///< distance in meters
   // avrSpeed : 0, ///< speed over whole run in m/sec
@@ -92,6 +94,16 @@ var state = {
 };
 // list of active stats (indexed by ID)
 var stats = {};
+
+const DATA_FILE = "exstats.json";
+// Load the state from a saved file if there was one
+state = Object.assign(state, require("Storage").readJSON(DATA_FILE,1)||{});
+// force step history to a uint8array
+state.stepHistory = new Uint8Array(state.stepHistory);
+// when we exit, write the current state
+E.on('kill', function() {
+  require("Storage").writeJSON(DATA_FILE, state);
+});
 
 // distance between 2 lat and lons, in meters, Mean Earth Radius = 6371km
 // https://www.movable-type.co.uk/scripts/latlong.html
@@ -128,19 +140,18 @@ function formatPace(speed, paceLength) {
 
 Bangle.on("GPS", function(fix) {
   if (!fix.fix) return; // only process actual fixes
-
-  if (!state.active) return;
   state.lastGPS = state.thisGPS;
   state.thisGPS = fix;
+  if (stats["altg"]) stats["altg"].emit("changed",stats["altg"]);
+  if (stats["speed"]) stats["speed"].emit("changed",stats["speed"]);
+  if (!state.active) return;
   if (state.lastGPS.fix)
     state.distance += calcDistance(state.lastGPS, fix);
   if (stats["dist"]) stats["dist"].emit("changed",stats["dist"]);
-  var duration = Date.now() - state.startTime; // in ms
-  state.avrSpeed = state.distance * 1000 / duration; // meters/sec
+  state.avrSpeed = state.distance * 1000 / state.duration; // meters/sec
   if (!isNaN(fix.speed)) state.curSpeed = state.curSpeed*0.8 + fix.speed*0.2/3.6; // meters/sec
   if (stats["pacea"]) stats["pacea"].emit("changed",stats["pacea"]);
   if (stats["pacec"]) stats["pacec"].emit("changed",stats["pacec"]);
-  if (stats["speed"]) stats["speed"].emit("changed",stats["speed"]);
   if (state.notify.dist.increment > 0 && state.notify.dist.next <= state.distance) {
     stats["dist"].emit("notify",stats["dist"]);
     state.notify.dist.next = state.notify.dist.next + state.notify.dist.increment;
@@ -150,8 +161,8 @@ Bangle.on("GPS", function(fix) {
 Bangle.on("step", function(steps) {
   if (!state.active) return;
   if (stats["step"]) stats["step"].emit("changed",stats["step"]);
-  state.stepHistory[0] += steps-state.lastStepCount;
-  state.lastStepCount = steps;
+  state.stepHistory[0] += steps-state.lastSteps;
+  state.lastSteps = steps;
   if (state.notify.step.increment > 0 && state.notify.step.next <= steps) {
     stats["step"].emit("notify",stats["step"]);
     state.notify.step.next = state.notify.step.next + state.notify.step.increment;
@@ -168,10 +179,21 @@ Bangle.on("HRM", function(h) {
     if (stats["bpm"]) stats["bpm"].emit("changed",stats["bpm"]);
   }
 });
+if (Bangle.setBarometerPower) Bangle.on("pressure", function(e) {
+  if (state.alt === undefined)
+    state.alt = e.altitude;
+  else
+    state.alt = state.alt*0.9 + e.altitude*0.1;
+  var i = Math.round(state.alt);
+  if (i!==state.alti) {
+    state.alti = i;
+    if (stats["altb"]) stats["altb"].emit("changed",stats["altb"]);
+  }
+});
 
 /** Get list of available statistic types */
 exports.getList = function() {
-  return [
+  var l = [
     {name: "Time", id:"time"},
     {name: "Distance", id:"dist"},
     {name: "Steps", id:"step"},
@@ -181,7 +203,10 @@ exports.getList = function() {
     {name: "Pace (curr)", id:"pacec"},
     {name: "Speed", id:"speed"},
     {name: "Cadence", id:"caden"},
+    {name: "Altitude (GPS)", id:"altg"}
   ];
+  if (Bangle.setBarometerPower) l.push({name: "Altitude (baro)", id:"altb"});
+  return l;
 };
 /** Instantiate the given list of statistic IDs (see comments at top)
  options = {
@@ -205,7 +230,7 @@ exports.getStats = function(statIDs, options) {
   options.notify.dist.increment = (options.notify && options.notify.dist && options.notify.dist.increment)||0;
   options.notify.step.increment = (options.notify && options.notify.step && options.notify.step.increment)||0;
   options.notify.time.increment = (options.notify && options.notify.time && options.notify.time.increment)||0;
-  var needGPS,needHRM;
+  var needGPS,needHRM,needBaro;
   // ======================
   if (statIDs.includes("time")) {
     stats["time"]={
@@ -276,17 +301,35 @@ exports.getStats = function(statIDs, options) {
       getString : function() { return state.stepsPerMin; },
     };
   }
+  if (statIDs.includes("altg")) {
+    needGPS = true;
+    stats["altg"]={
+      title : "Altitude",
+      getValue : function() { return state.thisGPS.alt; },
+      getString : function() { return (state.thisGPS.alt===undefined)?"-":Math.round(state.thisGPS.alt)+"m"; },
+    };
+  }
+  if (statIDs.includes("altb")) {
+    needBaro = true;
+    stats["altb"]={
+      title : "Altitude",
+      getValue : function() { return state.alt; },
+      getString : function() { return (state.alt===undefined)?"-":state.alti+"m"; },
+    };
+  }
   // ======================
   for (var i in stats) stats[i].id=i; // set up ID field
   if (needGPS) Bangle.setGPSPower(true,"exs");
   if (needHRM) Bangle.setHRMPower(true,"exs");
+  if (needBaro) Bangle.setBarometerPower(true,"exs");
   setInterval(function() { // run once a second....
     if (!state.active) return;
     // called once a second
     var now = Date.now();
-    var duration = now - state.startTime; // in ms
+    state.duration += now - state.lastTime; // in ms
+    state.lastTime = now;
     // set cadence -> steps over last minute
-    state.stepsPerMin = Math.round(60000 * E.sum(state.stepHistory) / Math.min(duration,60000));
+    state.stepsPerMin = Math.round(60000 * E.sum(state.stepHistory) / Math.min(state.duration,60000));
     if (stats["caden"]) stats["caden"].emit("changed",stats["caden"]);
     // move step history onwards
     state.stepHistory.set(state.stepHistory,1);
@@ -304,9 +347,9 @@ exports.getStats = function(statIDs, options) {
     }
   }, 1000);
   function reset() {
-    state.startTime = Date.now();
+    state.startTime = state.lastTime = Date.now();
+    state.duration = 0;
     state.startSteps = state.lastSteps = Bangle.getStepCount();
-    state.lastSteps = 0;
     state.stepHistory.fill(0);
     state.stepsPerMin = 0;
     state.distance = 0;
@@ -315,6 +358,8 @@ exports.getStats = function(statIDs, options) {
     state.BPM = 0;
     state.BPMage = 0;
     state.maxBPM = 0;
+    state.alt = undefined; // barometer altitude (meters)
+    state.alti = 0; // integer ver of state.alt (to avoid repeated 'changed' notifications)
     state.notify = options.notify;
     if (options.notify.dist.increment > 0) {
       state.notify.dist.next = state.distance + options.notify.dist.increment;
@@ -326,16 +371,22 @@ exports.getStats = function(statIDs, options) {
       state.notify.time.next = state.startTime + options.notify.time.increment;
     }
   }
-  reset();
+  if (!state.active) reset(); // we might already be active
   return {
-    stats : stats, state : state,
+    stats : stats,
+    state : state,
     start : function() {
-      state.active = true;
       reset();
+      state.active = true;
     },
     stop : function() {
       state.active = false;
-    }
+    },
+    resume : function() {
+      state.lastTime = Date.now();
+      state.lastSteps = Bangle.getStepCount()
+      state.active = true;
+    },
   };
 };
 
