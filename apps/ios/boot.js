@@ -105,7 +105,6 @@ E.on('notify',msg=>{
     "com.ubercab.UberClient": "Uber",
     "com.ubercab.UberEats": "UberEats",
     "com.unitedinternet.mmc.mobile.gmx.iosmailer": "GMX",
-    "com.valvesoftware.Steam": "Steam",
     "com.vilcsak.bitcoin2": "Coinbase",
     "com.wordfeud.free": "WordFeud",
     "com.yourcompany.PPClient": "PayPal",
