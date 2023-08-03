@@ -126,10 +126,17 @@ E.on('notify',msg=>{
       "com.google.ingress":1,
       "com.patreon.iphone":1,
       "com.valvesoftware.Steam":1,
-      "com.facebook.Messenger":1,
       "com.burbn.instagram":1,
       "com.hammerandchisel.discord" :1,
   };
+  // Disable messenger notifications outside of the timeframe 7:00-16:00 and on
+  // weekends
+  const now = new Date();
+  const hour = now.getHours();
+  const dow = now.getDay();
+  if(hour < 7 || hour > 15 || dow === 0 || dow === 6) {
+      ignoredApps['com.facebook.Messenger'] = 1;
+  }
   var unicodeRemap = {
     '2019':"'",
     '260':"A",
