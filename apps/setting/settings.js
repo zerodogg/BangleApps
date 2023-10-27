@@ -50,7 +50,7 @@ function resetSettings() {
       wakeOnBTN3: true,
       wakeOnFaceUp: false,
       wakeOnTouch: false,
-      wakeOnTwist: true,
+      wakeOnTwist: false,
       twistThreshold: 819.2,
       twistMaxY: -800,
       twistTimeout: 1000
@@ -823,7 +823,7 @@ function showAppSettings(app) {
   try {
     appSettings = eval(appSettings);
   } catch (e) {
-    console.log(`${app.name} settings error:`, e)
+    console.log(`${app.name} settings error:`, e);
     return showError(/*LANG*/'Error in settings');
   }
   if (typeof appSettings !== "function") {
@@ -833,7 +833,7 @@ function showAppSettings(app) {
     // pass showAppSettingsMenu as "back" argument
     appSettings(()=>showAppSettingsMenu());
   } catch (e) {
-    console.log(`${app.name} settings error:`, e)
+    console.log(`${app.name} settings error:`, e);
     return showError(/*LANG*/'Error in settings');
   }
 }
@@ -899,6 +899,7 @@ function showTouchscreenCalibration() {
   }
 
   function touchHandler(_,e) {
+    E.stopEventPropagation&&E.stopEventPropagation();
     var spot = corners[currentCorner];
     // store averages
     if (spot[0]*2 < g.getWidth())
@@ -921,7 +922,7 @@ function showTouchscreenCalibration() {
     }
     showTapSpot();
   }
-  Bangle.on('touch', touchHandler);
+  Bangle.prependListener&&Bangle.prependListener('touch',touchHandler)||Bangle.on('touch',touchHandler);
 
   showTapSpot();
 }

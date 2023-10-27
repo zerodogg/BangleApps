@@ -27,13 +27,11 @@ E.on('ANCS',msg=>{
   function ancsHandler() {
     var msg = Bangle.ancsMessageQueue[0];
     NRF.ancsGetNotificationInfo( msg.uid ).then( info => { // success
-
       if(msg.preExisting === true){
         info.new = false;
       } else {
         info.new = true;
       }
-
       E.emit("notify", Object.assign(msg, info));
       Bangle.ancsMessageQueue.shift();
       if (Bangle.ancsMessageQueue.length)
@@ -185,7 +183,9 @@ E.on('notify',msg=>{
     new : msg.new,
     title : msg.title&&E.decodeUTF8(msg.title, unicodeRemap, replacer),
     subject : msg.subtitle&&E.decodeUTF8(msg.subtitle, unicodeRemap, replacer),
-    body : msg.message&&E.decodeUTF8(msg.message, unicodeRemap, replacer) || "Cannot display"
+    body : msg.message&&E.decodeUTF8(msg.message, unicodeRemap, replacer) || "Cannot display",
+    positive : msg.positive,
+    negative : msg.negative
   });
   // TODO: posaction/negaction?
 });
@@ -212,7 +212,7 @@ Bangle.musicControl = cmd => {
 };
 // Message response
 Bangle.messageResponse = (msg,response) => {
-  if (isFinite(msg.id)) return NRF.sendANCSAction(msg.id, response);//true/false
+  if (isFinite(msg.id)) return NRF.ancsAction(msg.id, response);//true/false
   // error/warn here?
 };
 // remove all messages on disconnect
@@ -241,6 +241,8 @@ NRF.ancsGetNotificationInfo = function(uid) {
   });
 };
 
+E.on("notify", n => print("NOTIFY", n));
+
 E.emit("ANCS", {
     event:"add",
     uid:42,
@@ -248,9 +250,32 @@ E.emit("ANCS", {
     categoryCnt:42,
     silent:true,
     important:false,
-    preExisting:true,
+    preExisting:false,
     positive:false,
     negative:true
 });
 
+
 */
+
+{
+  let settings = require("Storage").readJSON("ios.settings.json",1)||{};
+  let ctsUpdate = e=>{
+    if (process.env.VERSION=="2v19")
+      e.date.setMonth(e.date.getMonth()-1); // fix for bug in 2v19 firmware
+    var tz = 0;
+    if (e.timezone!==undefined) {
+      E.setTimeZone(e.timezone);
+      tz = e.timezone*3600;
+      var settings = require('Storage').readJSON('setting.json',1)||{};
+      settings.timezone = e.timezone;
+      require('Storage').writeJSON('setting.json',settings);
+    }
+    setTime((e.date.getTime()/1000) - tz);
+  };
+  if (settings.timeSync && NRF.ctsGetTime) {
+    if (NRF.ctsIsActive())
+      NRF.ctsGetTime().then(ctsUpdate, function(){ /* */ })
+    E.on('CTS',ctsUpdate);
+  }
+}

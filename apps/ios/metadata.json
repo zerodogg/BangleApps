@@ -2,7 +2,7 @@
   "id": "ios",
   "name": "iOS Integration with exclusion hacks",
   "shortName": "iOS Integration",
-  "version": "1.17",
+  "version": "1.18",
   "description": "Display notifications/music/etc from iOS devices",
   "icon": "app.png",
   "tags": "tool,system,ios,apple,messages,notifications",
@@ -12,7 +12,9 @@
   "storage": [
     {"name":"ios.app.js","url":"app.js"},
     {"name":"ios.img","url":"app-icon.js","evaluate":true},
-    {"name":"ios.boot.js","url":"boot.js"}
+    {"name":"ios.boot.js","url":"boot.js"},
+    {"name":"ios.settings.js","url":"settings.js"}
   ],
+  "data": [{"name":"ios.settings.json"}],
   "sortorder": -8
 }
