@@ -1,0 +1,16 @@
+{
+  "id": "antonclkintw",
+  "name": "Anton Clock international+week",
+  "version": "0.1",
+  "description": "A variant of the Anton Clock that uses the international date format and shows week number",
+  "icon": "app.png",
+  "screenshots": [{"url":"screenshot.png"}],
+  "type": "clock",
+  "tags": "clock",
+  "supports": ["BANGLEJS","BANGLEJS2"],
+  "allow_emulator": true,
+  "storage": [
+    {"name":"antonclk.app.js","url":"app.js"},
+    {"name":"antonclk.img","url":"app-icon.js","evaluate":true}
+  ]
+}
