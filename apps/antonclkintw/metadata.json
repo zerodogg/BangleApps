@@ -1,7 +1,7 @@
 {
   "id": "antonclkintw",
   "name": "Anton Clock international+week",
-  "version": "0.1",
+  "version": "0.01",
   "description": "A variant of the Anton Clock that uses the international date format and shows week number",
   "icon": "app.png",
   "screenshots": [{"url":"screenshot.png"}],
