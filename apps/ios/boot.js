@@ -126,6 +126,7 @@ E.on('notify',msg=>{
       "com.valvesoftware.Steam":1,
       "com.burbn.instagram":1,
       "com.hammerandchisel.discord" :1,
+      "no.nilu.luftkvalitetsvarsling":1,
   };
   // Disable messenger notifications outside of the timeframe 7:00-16:00 and on
   // weekends
