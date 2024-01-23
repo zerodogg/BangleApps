@@ -333,6 +333,8 @@ E.emit("ANCS", {
 {
   let settings = require("Storage").readJSON("ios.settings.json",1)||{};
   let ctsUpdate = e=>{
+    if (process.env.VERSION=="2v19")
+      e.date.setMonth(e.date.getMonth()-1); // fix for bug in 2v19 firmware
     var tz = 0;
     if (e.timezone!==undefined) {
       E.setTimeZone(e.timezone);

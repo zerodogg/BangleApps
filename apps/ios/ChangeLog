@@ -15,4 +15,4 @@
       Allow negative/positive actions to pass through to message GUI
 0.15: Enable calendar and weather updates via custom notifications (via shortcuts app)
 0.16: Always request Current Time service from iOS
-1.20: zerodogg hack
+1.19: zerodogg hack
