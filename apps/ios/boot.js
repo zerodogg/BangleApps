@@ -121,6 +121,29 @@ E.on('notify',msg=>{
     // could also use NRF.ancsGetAppInfo(msg.appId) here
   };
 
+  const ignoredApps = {
+      "no.finn.ipad.rubrikk":1,
+      "com.google.ingress":1,
+      "com.patreon.iphone":1,
+      "com.valvesoftware.Steam":1,
+      "com.burbn.instagram":1,
+      "com.hammerandchisel.discord" :1,
+      "no.nilu.luftkvalitetsvarsling":1,
+  };
+  // Disable messenger notifications outside of the timeframe 7:00-16:00 and on
+  // weekends
+  const now = new Date();
+  const hour = now.getHours();
+  const dow = now.getDay();
+  if(hour < 7 || hour > 15 || dow === 0 || dow === 6) {
+      ignoredApps['com.facebook.Messenger'] = 1;
+  }
+  if(ignoredApps[msg.appId] === 1) {
+      delete msg;
+      // Ignored
+      return;
+  }
+
   //if (appNames[msg.appId]) msg.a
   if (msg.title === "BangleDumpCalendar") {
     // parse the message body into json:
