@@ -82,6 +82,7 @@ E.on('notify',msg=>{
     "com.apple.wifid.usernotification": "WiFi",
     "com.atebits.Tweetie2": "Twitter",
     "com.facebook.Facebook": "Facebook",
+    "com.facebook.Messenger": "Messenger",
     "com.google.Chromecast" : "Google Home",
     "com.google.Gmail" : "GMail",
     "com.google.hangouts" : "Hangouts",
