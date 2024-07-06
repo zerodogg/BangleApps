@@ -1,3 +1,4 @@
+{
 Bangle.loadWidgets();
 Bangle.drawWidgets();
 
@@ -159,6 +160,8 @@ function showAlertsMenu() {
 function showBLEMenu() {
   var hidV = [false, "kbmedia", "kb", "com", "joy"];
   var hidN = [/*LANG*/"Off", /*LANG*/"Kbrd & Media", /*LANG*/"Kbrd", /*LANG*/"Kbrd & Mouse", /*LANG*/"Joystick"];
+  var privacy = [/*LANG*/"Off", /*LANG*/"Show name", /*LANG*/"Hide name"];
+
   E.showMenu({
     '': { 'title': /*LANG*/'Bluetooth' },
     '< Back': ()=>showMainMenu(),
@@ -174,6 +177,32 @@ function showBLEMenu() {
       value: settings.blerepl,
       onchange: () => {
         settings.blerepl = !settings.blerepl;
+        updateSettings();
+      }
+    },
+    /*LANG*/'Privacy': {
+      min: 0, max: privacy.length-1,
+      format: v => privacy[v],
+      value: (() => {
+        // settings.bleprivacy may be some custom object, but we ignore that for now
+        if (settings.bleprivacy && settings.blename === false) return 2;
+        if (settings.bleprivacy) return 1;
+        return 0;
+      })(),
+      onchange: v => {
+        settings.bleprivacy = 0;
+        delete settings.blename;
+        switch (v) {
+          case 0:
+            break;
+          case 1:
+            settings.bleprivacy = 1;
+            break;
+          case 2:
+            settings.bleprivacy = 1;
+            settings.blename = false;
+            break;
+        }
         updateSettings();
       }
     },
@@ -956,3 +985,4 @@ function showTouchscreenCalibration() {
 }
 
 showMainMenu();
+}
