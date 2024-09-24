@@ -106,18 +106,16 @@ E.on('notify',msg=>{
       "com.burbn.instagram":1,
       "com.hammerandchisel.discord" :1,
       "no.nilu.luftkvalitetsvarsling":1,
-      "com.facebook.Messenger":1,
   };
-    /*
-  // Disable messenger notifications outside of the timeframe 7:00-16:00 and on
+  // Disable messenger+whatsapp notifications outside of the timeframe 7:00-16:00 and on
   // weekends
   const now = new Date();
   const hour = now.getHours();
   const dow = now.getDay();
   if(hour < 7 || hour > 15 || dow === 0 || dow === 6) {
       ignoredApps['com.facebook.Messenger'] = 1;
+      ignoredApps['net.whatsapp.WhatsApp'] = 1;
   }
-  */
   if(ignoredApps[msg.appId] === 1) {
       delete msg;
       // Ignored
